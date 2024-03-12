@@ -1,0 +1,21 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>Products</h1>
+
+{% for product in products %}
+<div class="spreadsheet"> <!-- Change id to class and use 'customer' instead of 'customers' -->
+    <div>
+        <p class="names">{{ product.name }}</p> <!-- Change id to class -->
+    </div> 
+    <div>
+        <p class="info">{{ product.price }}</p> <!-- Change id to class -->
+    </div>
+    <div>
+        <p class="info">{{ product.quantity }}</p> <!-- Change id to class -->
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>Customers</h1>
+
+<div>
+    <span id="names">{{ customer[1].name }}</span>
+    <span id="info">{{ customer[1].phone }}</span>
+    <span id="info">{{ customer[1].balance }}</span>
+
+</div>
+{% for data in customer %}
+<!-- <p>
+    <span id="names">{{ customer.name }}</span>
+    <span id="info">{{ customer.phone }}</span>
+    <span id="info">{{ customer.balance }}</span>
+</p> -->
+<div style="display: flex;">
+    
+    
+    
+    
+    
+    
+    <div>
+        <p id="names">{{ data["product_name"] }}</p>
+    </div>
+
+    <div>
+        <p id ="info">{{ data["price"] }}</p>
+    </div>
+
+    
+</div>
+
+
+{% endfor %}
+{% endblock %}

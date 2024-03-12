@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>Customers</h1>
+
+{% for customer in customers %}
+<div class="spreadsheet"> <!-- Change id to class and use 'customer' instead of 'customers' -->
+    <div>
+        <p class="names">{{ customer.name }}</p> <!-- Change id to class -->
+    </div> 
+    <div>
+        <p class="info">{{ customer.phone }}</p> <!-- Change id to class -->
+    </div>
+    <div>
+        <p class="info">{{ customer.balance }}</p> <!-- Change id to class -->
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

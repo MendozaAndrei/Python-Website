@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>Orders</h1>
+
+{% for products in prodOrders %}
+<!-- <p>
+    <span id="names">{{ customer.name }}</span>
+    <span id="info">{{ customer.phone }}</span>
+    <span id="info">{{ customer.balance }}</span>
+</p> -->
+<div style="display: flex;">
+    <div>
+        <p id="names">{{ products.quantity}}</p>
+    </div>
+    <div>
+        <p id ="info">{{ products.order }}</p>
+    </div>
+    <div>
+        <p id="info">{{ products.product }}</p>
+    </div>
+
+    
+</div>
+
+
+{% endfor %}
+{% endblock %}

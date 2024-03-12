@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    </head>
+    <body>
+        <nav>
+            <!-- the URL should be the name of the functions in app.py -->
+            <img src="https://cdn-icons-png.flaticon.com/128/4507/4507860.png" alt="Logo" style="width: 3%;">
+            <a href="{{ url_for('home') }}">Homepage</a>
+            <a href="{{ url_for('customers') }}">Customers</a>
+            <a href="{{ url_for('products') }}">Products</a>
+        </nav>
+        <!-- Anything inside the block content and endblock will not be shown in other sites. -->
+        {% block content %}
+        <div id="homepage">
+            <h1>Homepage</h1>
+            <p>Term Project for Python Object Oriented Programming</p>
+            <p>Made by: Andrei Jan Mendoza</p>
+            <p><br>Reasons behind this project:</p>
+            <ul>
+                
+                <li>Learn backend development with Python</li>
+                <li>Managing website with servers and databases</li>
+                <li>How to integrate databases and use them to help create the website</li>
+                <li>How to use Python to create a website</li>
+                <li>How to create an API database to share with in the web</li>
+                <li>Learning how POST PUT and DELETE can help update and manage a website</li>
+
+            </ul>
+
+        </div>
+            {% endblock %}
+
+
+        
+    </body>
+</html>
