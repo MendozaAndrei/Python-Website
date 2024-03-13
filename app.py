@@ -44,16 +44,39 @@ def products():
     return render_template("products.html", products=app_data)
 
 
-# This one does not work -- lacking data
-@app.route("/orders")
-def orders():
-    statement=select(Order).order_by(Order.id)
-    records = db.session.execute(statement)
-    app_data = records.scalars()
-    print("chicken")
-    for order in app_data:
-        print(order.items)
-    return render_template("order.html", orders=app_data)
+# # This one does not work -- lacking data
+# @app.route("/orders")
+# def orders():
+#     statement=select(Order).order_by(Order.id)
+#     records = db.session.execute(statement)
+#     app_data = records.scalars()
+#     print("chicken")
+#     for order in app_data:
+#         print(order.items)
+#     return render_template("order.html", orders=app_data)
+
+
+@app.route("/order/<int:order_id>")
+def order(order_id):
+    # Fetch the order from the database
+    order = Order.query.get(order_id)
+    if not order:
+        return "Order not found", 404
+
+    # Fetch the customer details
+    customer = Customer.query.get(order.customer_id)
+
+    # Calculate the estimated total for the order
+    # total = sum([item.product.price * item.quantity for item in order.items])
+    total = sum([float(item.product.price) * float(item.quantity) for item in order.items])
+    # Render the order details
+    return render_template("order_details.html", order=order, customer=customer, total=total)
+
+
+
+
+
+
 
 
 # Customer detail /customer/CUSTOMER_ID With links to all orders associated with the customer.
