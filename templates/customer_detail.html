@@ -2,38 +2,20 @@
 
 {% block content %}
 
-<h1>Customers</h1>
+<h1>Customer Details</h1>
 
+<h2>Information</h2>
+<p>Name: {{ customer.name }}</p>
+<p>Phone: {{ customer.phone }}</p>
+<p>Balance: {{ customer.balance }}</p>
+
+<h2>Orders</h2>
+{% for order in orders %}
 <div>
-    <span id="names">{{ customer[1].name }}</span>
-    <span id="info">{{ customer[1].phone }}</span>
-    <span id="info">{{ customer[1].balance }}</span>
-
+    <p>Order ID: {{ order.id }}</p>
+    <p>Total: {{ order.total }}</p>
+    <a href="/order/{{ order.id }}">View Order</a>
 </div>
-{% for data in customer %}
-<!-- <p>
-    <span id="names">{{ customer.name }}</span>
-    <span id="info">{{ customer.phone }}</span>
-    <span id="info">{{ customer.balance }}</span>
-</p> -->
-<div style="display: flex;">
-    
-    
-    
-    
-    
-    
-    <div>
-        <p id="names">{{ data["product_name"] }}</p>
-    </div>
-
-    <div>
-        <p id ="info">{{ data["price"] }}</p>
-    </div>
-
-    
-</div>
-
-
 {% endfor %}
+
 {% endblock %}

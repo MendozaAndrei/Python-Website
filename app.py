@@ -57,21 +57,18 @@ def products():
 
 
 @app.route("/order/<int:order_id>")
-def order(order_id):
+def order_detail(order_id):
     # Fetch the order from the database
-    order = Order.query.get(order_id)
-    if not order:
-        return "Order not found", 404
+    order = Order.query.get_or_404(order_id)
 
-    # Fetch the customer details
+    # Fetch the customer associated with this order
     customer = Customer.query.get(order.customer_id)
 
-    # Calculate the estimated total for the order
-    # total = sum([item.product.price * item.quantity for item in order.items])
-    total = sum([float(item.product.price) * float(item.quantity) for item in order.items])
-    # Render the order details
-    return render_template("order_details.html", order=order, customer=customer, total=total)
+    # Calculate the total for the order
+    order.total = sum(float(item.product.price) * float(item.quantity) for item in order.items)
 
+    # Render the order details
+    return render_template("order_details.html", order=order, customer=customer)
 
 
 
@@ -80,29 +77,20 @@ def order(order_id):
 
 
 # Customer detail /customer/CUSTOMER_ID With links to all orders associated with the customer.
-@app.route("/customers/<int:customer_id>")
-def order_detail(customer_id):
-    customer = db.get_or_404(Customer, customer_id)
-    list_of_orders = []
-    for item in customer.orders[0].items:
-        json_records = {
-            "name": customer.name,
-            "phone": customer.phone,
-            "balance": customer.balance,
-            
-            "Order_name": item.product.name,
-            "price": item.product.price
-        }
-        list_of_orders.append(json_records)
-            
-    # Adding more data into the list of orders.
-    
-            
-    
-    return render_template("customer_detail.html", customer=list_of_orders)
-    
-    
-    pass        # Accessing the Customer json file and c`reating them into a json record. 
+@app.route("/customer/<int:customer_id>")
+def customer_detail(customer_id):
+    # Fetch the customer from the database
+    customer = Customer.query.get_or_404(customer_id)
+
+    # Fetch all orders associated with this customer
+    orders = Order.query.filter_by(customer_id=customer_id).all()
+
+    # Calculate the total for each order
+    for order in orders:
+        # order.total = sum([item.product.price * item.quantity for item in order.items])
+        order.total = sum([float(item.product.price) * float(item.quantity) for item in order.items])
+    # Render the customer details and associated orders
+    return render_template("customer_detail.html", customer=customer, orders=orders)    # Accessing the Customer json file and c`reating them into a json record. 
 # =================================================================================================
 '''
 Each function is a route that returns a template to the url. The URL functions needs to be the same when

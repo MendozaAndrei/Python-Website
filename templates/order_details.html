@@ -2,30 +2,22 @@
 
 {% block content %}
 
-
 <h1>Order Details</h1>
 
-<h2>Customer Information</h2>
-<p>Name: {{ customer.name }}</p>
-<p>Phone: {{ customer.phone }}</p>
-<p>Balance: {{ customer.balance }}</p>
-
-<h2>Order Information</h2>
+<h2>Information</h2>
 <p>Order ID: {{ order.id }}</p>
+<p>Total: {{ order.total }}</p>
 
 <h2>Products</h2>
-{% for product in order.products %}
-<ul>
-    <li>
-        <p>Product Name: {{ product.name }}</p>
-        <p>Price: {{ product.price }}</p>
-        <p>Quantity Ordered: {{ product.quantity }}</p>
-    </li>
-</ul>
+{% for item in order.items %}
+<div>
+    <p>Product: {{ item.product.name }}</p>
+    <p>Price: {{ item.product.price }}</p>
+    <p>Quantity Ordered: {{ item.quantity }}</p>
+    <p>Quantity Available: {{ item.product.quantity_available }}</p>
+</div>
 {% endfor %}
 
-<h2>Estimated Total</h2>
-<p>{{ total }}</p>
-
+<a href="/customer/{{ customer.id }}">Back to Customer Page</a>
 
 {% endblock %}
