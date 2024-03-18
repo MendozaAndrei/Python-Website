@@ -58,38 +58,23 @@ def products():
 
 @app.route("/order/<int:order_id>")
 def order_detail(order_id):
-    # Fetch the order from the database
     order = Order.query.get_or_404(order_id)
 
-    # Fetch the customer associated with this order
     customer = Customer.query.get(order.customer_id)
 
-    # Calculate the total for the order
     order.total = sum(float(item.product.price) * float(item.quantity) for item in order.items)
 
-    # Render the order details
     return render_template("order_details.html", order=order, customer=customer)
-
-
-
-
-
-
 
 # Customer detail /customer/CUSTOMER_ID With links to all orders associated with the customer.
 @app.route("/customer/<int:customer_id>")
 def customer_detail(customer_id):
-    # Fetch the customer from the database
     customer = Customer.query.get_or_404(customer_id)
 
-    # Fetch all orders associated with this customer
     orders = Order.query.filter_by(customer_id=customer_id).all()
 
-    # Calculate the total for each order
     for order in orders:
-        # order.total = sum([item.product.price * item.quantity for item in order.items])
         order.total = sum([float(item.product.price) * float(item.quantity) for item in order.items])
-    # Render the customer details and associated orders
     return render_template("customer_detail.html", customer=customer, orders=orders)    # Accessing the Customer json file and c`reating them into a json record. 
 # =================================================================================================
 '''
@@ -311,7 +296,16 @@ def product_put(product_id):
     
 
     return "", 204
+# =================================================================================================
+"""
+PUT is basically UPDATING the data. The data being updated NEEDS to exist, or else it will return an error that the data cannot be found
+POST is basically ADDING the data. The data being added NEEDS to be in the database, or else it will return an error that the data cannot be found
+DELETE is basically DELETING the data. The data being deleted NEEDS to be in the database, or else it will return an error that the data cannot be found
 
+
+
+
+"""
 
 
 

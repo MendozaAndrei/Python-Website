@@ -82,8 +82,8 @@ if __name__ == "__main__":
         # print(customer.orders[1].items[1].product.name)
         # print(customer.orders[1].items[1].product.price)
         # print(customer.orders[1].items[1].quantity)
-        print(customer.orders[0].items[1].product.name)
-        print(len(customer.orders[0].items))
+        # print(customer.orders[0].items[1].product.name)
+        # print(len(customer.orders[0].items))
         list_of_orders = []
         for item in customer.orders[0].items:
             json_records = {
