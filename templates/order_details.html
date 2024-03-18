@@ -10,14 +10,26 @@
 
 <h2>Products</h2>
 {% for item in order.items %}
-<div>
-    <p>Product: {{ item.product.name }}</p>
-    <p>Price: {{ item.product.price }}</p>
-    <p>Quantity Ordered: {{ item.quantity }}</p>
-    <p>Quantity Available: {{ item.product.quantity_available }}</p>
+
+<div class="spreadsheet">
+    <div>
+        <p>Product: {{ item.product.name }}</p>
+    </div>
+    <div>
+        <p>Price: {{ item.product.price }}</p>
+        
+    </div>
+    <div>
+        <p>Quantity Ordered: {{ item.quantity }}</p>
+        
+    </div>
+    <div>
+        <p>Quantity Available: {{ item.product.quantity_available }}</p>
+        
+    </div>
+
 </div>
 {% endfor %}
 
 <a href="/customer/{{ customer.id }}">Back to Customer Page</a>
-
 {% endblock %}

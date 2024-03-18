@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>Orders</h1>
+
+{% for ord in orders %}
+<div class="spreadsheet"> <!-- Change id to class and use 'customer' instead of 'customers' -->
+    <div>
+        <p class="info">{{ ord.id }}</p> <!-- Change id to class -->
+    </div>
+    <div>
+        <p class="info">{{ ord.customer_id }}</p> <!-- Change id to class -->
+    </div>
+</div>
+
+{% endfor %}
+{% endblock %}

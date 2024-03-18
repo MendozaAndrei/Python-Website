@@ -52,7 +52,7 @@ class Order(db.Model):
     id = mapped_column(Integer, primary_key=True)
     customer_id = mapped_column(Integer, ForeignKey('customer.id'), nullable=False)
     
-    
+    total = mapped_column(Numeric(10,2), nullable=False, default=0)
     # Creates a relationship with Order and
     customer = relationship("Customer", back_populates="orders")
     items = relationship("ProductOrder", back_populates="order")

@@ -44,6 +44,15 @@ def products():
     return render_template("products.html", products=app_data)
 
 
+@app.route("/orders")
+def orders():
+    statement = select(Order).order_by(Order.id)
+    records = db.session.execute(statement)
+    app_data = records.scalars()
+    return render_template("orders.html", orders=app_data)
+
+
+
 # # This one does not work -- lacking data
 # @app.route("/orders")
 # def orders():
@@ -56,7 +65,7 @@ def products():
 #     return render_template("order.html", orders=app_data)
 
 
-@app.route("/order/<int:order_id>")
+@app.route("/orders/<int:order_id>")
 def order_detail(order_id):
     order = Order.query.get_or_404(order_id)
 
@@ -86,7 +95,7 @@ records is what EXECUTES that command. Statement can be inside the execute() fun
 
 render_template is a functin that will load the HTML file and additional contents. The first position is REQUIRED to be
 the HTML file. The second position is data that can be accessible to the HTML file. This allows us to load any information that wants to be loaded. 
-'''
+''' 
 #================ API list of all the customers, products and orders ===============================
 # This part creates the API list of the Website. 
 @app.route("/api/customers")
@@ -138,10 +147,10 @@ def order_json():
     data = [] # output variable
     for data_p in results.scalars():
         json_record = {
-        "id": data_p.id,
-        "customer_id": data_p.name,
-        # "": data_p.price,
-        # "quantity": data_p.quantity
+            "id": data_p.id,
+            "total": data_p.total,
+            "customer_id": data_p.customer_id,
+            "items": data_p.items
         }
         data.append(json_record)
         # Turns products into a json format. 
@@ -280,7 +289,6 @@ def product_put(product_id):
     data = request.json
     product = db.get_or_404(Product, product_id)
 
-    print(data)
     attributes = ["name", "price", "quantity"]
     # Since data is a dicitonary, we can use the .get(value) to iterate thorugh the keys and set the value 
     updates = {attr: data.get(attr) for attr in attributes if attr in data}
@@ -296,6 +304,9 @@ def product_put(product_id):
     
 
     return "", 204
+
+
+
 # =================================================================================================
 """
 PUT is basically UPDATING the data. The data being updated NEEDS to exist, or else it will return an error that the data cannot be found

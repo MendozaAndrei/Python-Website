@@ -2,8 +2,8 @@ import csv
 from app import app, db
 from models import Customer, Product, ProductOrder, Order
 # from sqlalchemy.sql.expression import random
-from sqlalchemy import func
-
+from sqlalchemy import func , select
+import random
 
 def drop_all():
     with app.app_context():
@@ -19,21 +19,43 @@ def import_data():
             reader = csv.reader(f)
             next(reader)  # Skip the header row
             for row in reader:
-                customers = Customer(name=row[0], phone=row[1])
+                customers = Customer(name=row[0], phone=row[1], balance=random.randint(100,1000))
                 db.session.add(customers)
 
         with open('data/products.csv', 'r') as f:
             reader = csv.reader(f)
             next(reader)  # Skip the header row
             for row in reader:
-                products = Product(name=row[0], price=row[1])
+                products = Product(name=row[0], price=row[1], quantity=random.randint(0,100))
                 db.session.add(products)
 
         db.session.commit()
         
 
 # Grabbing random values
-
+def random_data():
+    with app.app_context():
+        for x in range(100):
+            cust_stmt = db.select(Customer).order_by(func.random()).limit(1)
+            customer = db.session.execute(cust_stmt).scalar()
+            # Make an order
+            order = Order(customer=customer)
+            db.session.add(order)
+            # Find a random product
+            prod_stmt = db.select(Product).order_by(func.random()).limit(1)
+            product = db.session.execute(prod_stmt).scalar()
+            rand_qty = random.randint(10, 20)
+            # Add that product to the order
+            association_1 = ProductOrder(order=order, product=product, quantity=rand_qty)
+            db.session.add(association_1)
+            # Do it again
+            prod_stmt = db.select(Product).order_by(func.random()).limit(1)
+            product = db.session.execute(prod_stmt).scalar()
+            rand_qty = random.randint(10, 20)
+            association_2 = ProductOrder(order=order, product=product, quantity=rand_qty)
+            db.session.add(association_2)
+            # Commit to the database
+            db.session.commit()
         
         
 
@@ -41,61 +63,6 @@ if __name__ == "__main__":
     drop_all()
     create_all()
     import_data()
-    with app.app_context():
-        order1 = Order(customer_id = 1)
-        order2 = Order(customer_id = 2)
-        order3 = Order(customer_id = 5)
-        po1 = ProductOrder(order_id = 1, product_id = 2, quantity = 3)
-        po2 = ProductOrder(order_id = 1, product_id = 12, quantity = 4)
-        po3 = ProductOrder(order_id = 1, product_id = 14, quantity = 3)
-        po4 = ProductOrder(order_id = 1, product_id = 7, quantity = 8)
-        po5 = ProductOrder(order_id = 2, product_id = 5, quantity = 7)
-        po6 = ProductOrder(order_id = 2, product_id = 3, quantity = 9)
-        po7 = ProductOrder(order_id = 3, product_id = 6, quantity = 1)
-        db.session.add(order1)
-        db.session.add(order2)
-        db.session.add(order3)
-        db.session.add(po1)
-        db.session.add(po2)
-        db.session.add(po3)
-        db.session.add(po4)
-        db.session.add(po5)
-        db.session.add(po6)
-        db.session.add(po7)
-        db.session.commit()
-        customer = db.get_or_404(Customer, 2)# customer is class and 1 is id
-        # print(customer.orders[0].items[0].product.name)
-        # print(customer.orders[0].items[0].product.price)
-        # print(customer.orders[0].items[0].quantity)
-        # print(customer.orders[0].items[1].product.name)
-        # print(customer.orders[0].items[1].product.price)
-        # print(customer.orders[0].items[1].quantity)
-        # print(customer.orders[0].items[2].product.name)
-        # print(customer.orders[0].items[2].product.price)
-        # print(customer.orders[0].items[2].quantity)
-        # print(customer.orders[0].items[3].product.name)
-        # print(customer.orders[0].items[3].product.price)
-        # print(customer.orders[0].items[3].quantity)
-        # print(customer.orders[1].items[0].product.name)
-        # print(customer.orders[1].items[0].product.price)
-        # print(customer.orders[1].items[0].quantity)
-        # print(customer.orders[1].items[1].product.name)
-        # print(customer.orders[1].items[1].product.price)
-        # print(customer.orders[1].items[1].quantity)
-        # print(customer.orders[0].items[1].product.name)
-        # print(len(customer.orders[0].items))
-        list_of_orders = []
-        for item in customer.orders[0].items:
-            json_records = {
-                "name": customer.name,
-                "Order_name": item.product.name,
-                "price": item.product.price
-            }
-            list_of_orders.append(json_records)
-
-        for x in list_of_orders:
-            print(x["name"])
-            print(x["Order_name"])
-            print(x["price"])
+    random_data()
     app.run(debug=True, port=8888)
     
