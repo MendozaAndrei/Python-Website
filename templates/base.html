@@ -12,6 +12,7 @@
             <a href="{{ url_for('home') }}">Homepage</a>
             <a href="{{ url_for('customers') }}">Customers</a>
             <a href="{{ url_for('products') }}">Products</a>
+            <a href="{{ url_for('orders') }}">Orders</a>
         </nav>
         <!-- Anything inside the block content and endblock will not be shown in other sites. -->
         {% block content %}
@@ -40,8 +41,12 @@
                 <li>/api/customer</li>
                 <li>/api/products</li>
             </ul>
-
-
+            <h2>What to remember:</h2>
+            <ul>
+                <li>POST = is adding data into the database. It will automatically be generated its own unique id. It will contain necessary information given from the POST record in postman</li>
+                <li>PUT = is Updating data in a database. This will change it throughout the entire page and webpages.</li>
+                <li>DELETE = is Deleting data in the database. Don't know what else happens here, fuck off.</li>
+            </ul>
 
         </div>
             {% endblock %}

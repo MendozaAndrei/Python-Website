@@ -95,7 +95,13 @@ records is what EXECUTES that command. Statement can be inside the execute() fun
 
 render_template is a functin that will load the HTML file and additional contents. The first position is REQUIRED to be
 the HTML file. The second position is data that can be accessible to the HTML file. This allows us to load any information that wants to be loaded. 
+
+Scalars is a function that will grab the data from the database and will be used to be displayed on the HTML file.
+
 ''' 
+
+
+
 #================ API list of all the customers, products and orders ===============================
 # This part creates the API list of the Website. 
 @app.route("/api/customers")
@@ -144,13 +150,16 @@ def products_json():
 def order_json():
     statement = db.select(Order).order_by(Order.id)
     results = db.session.execute(statement)
+    
+    otherstatement = db.select(Customer).where(Customer.id == Order.customer_id)
+    
+    
     data = [] # output variable
     for data_p in results.scalars():
         json_record = {
             "id": data_p.id,
-            "total": data_p.total,
             "customer_id": data_p.customer_id,
-            "items": data_p.items
+            
         }
         data.append(json_record)
         # Turns products into a json format. 
