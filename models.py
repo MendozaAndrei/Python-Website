@@ -4,14 +4,12 @@ from db import db
 
 # creates the table for us.
 class Customer(db.Model):
-    id = mapped_column(Integer, primary_key=True, unique=True, autoincrement=True)
-    name = mapped_column(String(200), nullable=False, unique=True)
-    phone = mapped_column(String(20), nullable=False)
-    balance = mapped_column(Numeric(10,2), nullable=False, default=0)
-    
-    # Creates a relationship to Product
-    orders = relationship("Order", back_populates="customer")
-    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False, unique=True)
+    phone = db.Column(db.String(20), nullable=False, unique=True)
+    balance = db.Column(db.Integer, nullable=False, default=0)
+    orders = db.relationship('Order', backref='customer')
+
     def to_json(self):
         return {
             "id": self.id,
@@ -20,12 +18,14 @@ class Customer(db.Model):
             "balance": self.balance,
             'order_ids': [order.id for order in self.orders]
         }
-        
+
 class Product(db.Model):
-    id = mapped_column(Integer, primary_key=True)
-    name = mapped_column(String(200), nullable=False, unique=True)
-    price = mapped_column(String(20), nullable=False)
-    quantity = mapped_column(Integer, nullable=False, default=0)
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False, unique=True)
+    price = db.Column(db.String(20), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False, default=0)
+    product_orders = db.relationship('ProductOrder', back_populates='product')
+
     def to_json(self):
         return {
             "id": self.id,
@@ -33,78 +33,23 @@ class Product(db.Model):
             "price": self.price,
             "quantity": self.quantity,
         }
-    
 
 class Order(db.Model):
-    '''
-    This one connects to customer only
-    id
-    total
-    customer_id - foreign key
-    
-    '''
-    # id = mapped_column(Integer, primary_key=True, unique=True, nullable=False)
-    # total = mapped_column(Integer, nullable=False)
-    # customer_id = mapped_column("Customers", back_pupulates="orders")
-    # items = mapped_column("Customer")
-    # product_order = relationship("ProductOrder")
-    
-    
-    id = mapped_column(Integer, primary_key=True)
-    customer_id = mapped_column(Integer, ForeignKey('customer.id'), nullable=False)
-    
-    total = mapped_column(Numeric(10,2), nullable=False, default=0)
-    # Creates a relationship with Order and
-    customer = relationship("Customer", back_populates="orders")
-    items = relationship("ProductOrder", back_populates="order")
-    
-    
-    
-    def to_json(self):
-        return {
-            'id': self.id,
-            'customer_id': self.customer_id,
-            'items': [item.id for item in self.items],
-            'total': str(self.total)
-        }
-
+    id = db.Column(db.Integer, primary_key=True)
+    total = db.Column(db.Integer, nullable=False)
+    customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'))
+    product_orders = db.relationship('ProductOrder', back_populates='order')
 
 class ProductOrder(db.Model):
-    '''
-    This is connected to Order 
-    This is connected to Product
-    id
-    order_id
-    product_id
-    quanitity
-    
-    '''
-    id = mapped_column(Integer, primary_key=True)
-    order_id = mapped_column(Integer, ForeignKey('order.id'), nullable=False)
-    product_id = mapped_column(Integer, ForeignKey('product.id'), nullable=False)
-    quantity = mapped_column(Integer, default=0, nullable=False)
-    order = relationship("Order", back_populates="items")
-    product = relationship("Product")
+    order_id = db.Column(db.Integer, db.ForeignKey('order.id'), primary_key=True)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), primary_key=True)
+    quantity = db.Column(db.Integer, nullable=False, default=0)
+    order = db.relationship('Order', back_populates='product_orders')
+    product = db.relationship('Product', back_populates='product_orders')
+
     def to_json(self):
         return {
-            'id': self.id,
             'order_id': self.order_id,
             'product_id': self.product_id,
             'quantity': self.quantity
         }
-        
-# class Order(db.Model):
-#     id = mapped_column(Integer, primary_key=True, autoincrement=True)
-#     total = mapped_column(Numeric)
-#     customer_id = mapped_column(Integer, ForeignKey(Customer.id), nullable=False, unique=True)
-#     customer = relationship("Customer", back_populates="orders")
-    
-# class ProductOrder(db.Model):
-#     id = mapped_column(Integer, primary_key=True, nullable=False,autoincrement=True)
-#     quanitty = mapped_column(Integer, nullable=False)
-#     order_id = mapped_column(Integer, ForeignKey(Order.id), nullable=False)
-#     product_id = mapped_column(Integer, ForeignKey(Product.id), nullable=False)
-#     pass
-    
-    
-    

@@ -3,6 +3,7 @@ from app import app, db
 from models import Customer, Product, ProductOrder, Order
 # from sqlalchemy.sql.expression import random
 from sqlalchemy import func , select
+from sqlalchemy import and_
 import random
 
 def drop_all():
@@ -38,25 +39,32 @@ def random_data():
         for x in range(100):
             cust_stmt = db.select(Customer).order_by(func.random()).limit(1)
             customer = db.session.execute(cust_stmt).scalar()
-            # Make an order
-            order = Order(customer=customer)
+
+            # Make an order first
+            order = Order(customer=customer, total=0)
             db.session.add(order)
-            # Find a random product
-            prod_stmt = db.select(Product).order_by(func.random()).limit(1)
-            product = db.session.execute(prod_stmt).scalar()
-            rand_qty = random.randint(10, 20)
-            # Add that product to the order
-            association_1 = ProductOrder(order=order, product=product, quantity=rand_qty)
-            db.session.add(association_1)
-            # Do it again
-            prod_stmt = db.select(Product).order_by(func.random()).limit(1)
-            product = db.session.execute(prod_stmt).scalar()
-            rand_qty = random.randint(10, 20)
-            association_2 = ProductOrder(order=order, product=product, quantity=rand_qty)
-            db.session.add(association_2)
+
+            total = 0  # Initialize total
+            for _ in range(2):  # Do this twice
+                # Find a random product
+                prod_stmt = db.select(Product).order_by(func.random()).limit(1)
+                product = db.session.execute(prod_stmt).scalar()
+
+                # Calculate the total
+                quantity = random.randint(1, 5)
+                total += float(product.price) * int(quantity)
+
+                # Create a product order
+                product_order = ProductOrder(order=order, product=product, quantity=quantity)
+
+                # Add the product order to the session
+                db.session.add(product_order)
+
+            # Update the total of the order
+            order.total = total
+
             # Commit to the database
-            db.session.commit()
-        
+            db.session.commit()    # Calculate the total
         
 
 if __name__ == "__main__":

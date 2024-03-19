@@ -356,6 +356,16 @@ def product_put(product_id):
 
     return "", 204
 
+from flask import redirect, url_for
+
+@app.route("/orders/<int:order_id>/delete", methods=["POST"])
+def order_delete(order_id):
+    order = db.get_or_404(Order, order_id)
+    db.session.flush()
+    db.session.delete(order)
+    db.session.commit()
+    return redirect(url_for("orders"))
+
 
 
 # =================================================================================================
