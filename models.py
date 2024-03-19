@@ -18,6 +18,7 @@ class Customer(db.Model):
             "name": self.name,
             "phone": self.phone,
             "balance": self.balance,
+            'order_ids': [order.id for order in self.orders]
         }
         
 class Product(db.Model):
@@ -61,12 +62,11 @@ class Order(db.Model):
     
     def to_json(self):
         return {
-            "id": self.id,
-            "customer_id": self.customer_id,
-            "customer": self.customer,
-            "item": self.items,
+            'id': self.id,
+            'customer_id': self.customer_id,
+            'items': [item.id for item in self.items],
+            'total': str(self.total)
         }
-
 
 
 class ProductOrder(db.Model):
@@ -87,12 +87,10 @@ class ProductOrder(db.Model):
     product = relationship("Product")
     def to_json(self):
         return {
-            "id": self.id,
-            "product_id": self.product_id,
-            "order_id": self.order_id,
-            "quantity": self.quantity,
-            "order":self.order,
-            "product": self.product
+            'id': self.id,
+            'order_id': self.order_id,
+            'product_id': self.product_id,
+            'quantity': self.quantity
         }
         
 # class Order(db.Model):

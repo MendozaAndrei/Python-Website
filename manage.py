@@ -64,5 +64,5 @@ if __name__ == "__main__":
     create_all()
     import_data()
     random_data()
-    app.run(debug=True, port=8888)
+    
     

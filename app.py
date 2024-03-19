@@ -3,7 +3,7 @@ import csv
 from pathlib import Path
 from db import db
 from sqlalchemy import select
-from models import Customer, Product, Order
+from models import Customer, Product, Order, ProductOrder
 app = Flask(__name__)
 
 
@@ -21,7 +21,7 @@ db.init_app(app)
 
 
 #================================ pages ==========================
-
+"""This holds all pages with relevant information inside them"""
 @app.route("/") 
 def home():
     """This is the homepage. Nothing will be shown here"""
@@ -51,19 +51,10 @@ def orders():
     app_data = records.scalars()
     return render_template("orders.html", orders=app_data)
 
-
-
-# # This one does not work -- lacking data
-# @app.route("/orders")
-# def orders():
-#     statement=select(Order).order_by(Order.id)
-#     records = db.session.execute(statement)
-#     app_data = records.scalars()
-#     print("chicken")
-#     for order in app_data:
-#         print(order.items)
-#     return render_template("order.html", orders=app_data)
-
+# ======================== Specific Detail Pages ===============================    
+"""
+This contains all specific details regarding the customer_id in customers or the order_id in orders.
+"""
 
 @app.route("/orders/<int:order_id>")
 def order_detail(order_id):
@@ -150,11 +141,7 @@ def products_json():
 def order_json():
     statement = db.select(Order).order_by(Order.id)
     results = db.session.execute(statement)
-    
-    otherstatement = db.select(Customer).where(Customer.id == Order.customer_id)
-    
-    
-    data = [] # output variable
+    data = []
     for data_p in results.scalars():
         json_record = {
             "id": data_p.id,
@@ -162,9 +149,64 @@ def order_json():
             
         }
         data.append(json_record)
-        # Turns products into a json format. 
     return jsonify(data)
+
+@app.route("/api/orders/<int:order_id>")
+def order_detail_json(order_id):
+    statement = db.select(Order).where(Order.id == order_id)
+    result = db.session.execute(statement)
+    data = []
+    for data_p in result.scalars():
+        # Create a list of items
+        items = [{"name": item.product.name, "quantity": item.quantity} for item in data_p.items]
+        json_record = {
+            "id": data_p.id,
+            "customer_id": data_p.customer_id,
+            "items": items,  # Add the items to the JSON record
+        }
+        data.append(json_record)
+    return jsonify(data)
+
+
 #creating  a route that takes in a URL parameter
+
+@app.route("/api/orders", methods=["POST"])
+def create_order():
+    # Extract JSON data from the request
+    data = request.get_json()
+
+    # Validate the JSON data
+    if "customer_id" not in data:
+        return jsonify({"error": "Missing customer_id"}), 400
+    if "items" not in data or not isinstance(data["items"], list) or not data["items"]:
+        return jsonify({"error": "Invalid items"}), 400
+
+    # Check if the customer exists
+    customer = Customer.query.get(data["customer_id"])
+    if not customer:
+        return jsonify({"error": "Customer not found"}), 404
+
+    # Create a new order
+    order = Order(customer_id=customer.id)
+    db.session.add(order)
+
+    # Add items to the order
+    for item_data in data["items"]:
+        if "name" not in item_data or "quantity" not in item_data:
+            return jsonify({"error": "Invalid item data"}), 400
+
+        # Check if the product exists
+        product = Product.query.filter_by(name=item_data["name"]).first()
+        if product:
+            # Create a new ProductOrder
+            product_order = ProductOrder(order_id=order.id, product_id=product.id, quantity=item_data["quantity"])
+            db.session.add(product_order)
+
+    # Save the changes to the database
+    db.session.commit()
+
+    # Return a success response
+    return jsonify(order.to_json()), 201
 # =================================================================================================
 '''
 This allows the creation for API's. 
@@ -327,6 +369,8 @@ DELETE is basically DELETING the data. The data being deleted NEEDS to be in the
 
 """
 
+if __name__=="__main__":
+    app.run(debug=True, port=8888)
 
 
     
