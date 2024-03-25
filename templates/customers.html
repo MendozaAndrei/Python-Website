@@ -5,16 +5,16 @@
 <h1>Customers</h1>
 
 {% for customer in customers %}
-<div class="spreadsheet"> <!-- Change id to class and use 'customer' instead of 'customers' -->
+<div class="spreadsheet"> 
     <div>
          
-        <a href="{{url_for('customer_detail', customer_id=customer.id)}}">{{ customer.name }}</a><!-- Change id to class -->
+        <a href="{{url_for('customer_detail', customer_id=customer.id)}}">{{ customer.name }}</a>
     </div> 
     <div>
-        <p class="info">{{ customer.phone }}</p> <!-- Change id to class -->
+        <p class="info">{{ customer.phone }}</p> 
     </div>
     <div>
-        <p class="info">{{ customer.balance }}</p> <!-- Change id to class -->
+        <p class="info">{{ customer.balance }}</p> 
     </div>
 </div>
 {% endfor %}

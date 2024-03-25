@@ -2,7 +2,7 @@ from sqlalchemy import Boolean, Float, Numeric, ForeignKey, Integer, String
 from sqlalchemy.orm import mapped_column, relationship
 from db import db
 
-# creates the table for us.
+#This'll create the table.
 class Customer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False, unique=True)
@@ -24,7 +24,7 @@ class Product(db.Model):
     name = db.Column(db.String(200), nullable=False, unique=True)
     price = db.Column(db.String(20), nullable=False)
     quantity = db.Column(db.Integer, nullable=False, default=0)
-    product_orders = db.relationship('ProductOrder', back_populates='product')
+    product_orders = db.relationship('ProductOrder', backref='product_ref')
 
     def to_json(self):
         return {
@@ -38,15 +38,16 @@ class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     total = db.Column(db.Integer, nullable=False)
     customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'))
-    product_orders = db.relationship('ProductOrder', back_populates='order')
-
+    product_orders = db.relationship('ProductOrder', backref='order_ref', cascade='all, delete-orphan')
+    # created = db.column(db.DateTime, server_default=db.func.now()) - part 3
+    # processed = db.column(db.Boolean, default=None, nullable= True) - part 3, no need yet
+    
+    
+    
 class ProductOrder(db.Model):
     order_id = db.Column(db.Integer, db.ForeignKey('order.id'), primary_key=True)
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'), primary_key=True)
     quantity = db.Column(db.Integer, nullable=False, default=0)
-    order = db.relationship('Order', back_populates='product_orders')
-    product = db.relationship('Product', back_populates='product_orders')
-
     def to_json(self):
         return {
             'order_id': self.order_id,

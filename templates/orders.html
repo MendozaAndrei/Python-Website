@@ -12,7 +12,11 @@
     <div>
         <p class="info">{{ ord.customer_id }}</p> <!-- Change id to class -->
     </div>
+
 </div>
+<form method="POST" action="{{ url_for('order_delete', order_id=ord.id) }}">
+    <button type="submit">Delete</button>
+</form>
 
 {% endfor %}
 {% endblock %}

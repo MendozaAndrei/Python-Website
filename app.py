@@ -3,6 +3,7 @@ import csv
 from pathlib import Path
 from db import db
 from sqlalchemy import select
+from flask import redirect, url_for
 from models import Customer, Product, Order, ProductOrder
 app = Flask(__name__)
 
@@ -38,6 +39,7 @@ def customers():
 
 @app.route("/products")
 def products():
+    '''This is the products page. It will show all the products in the database.'''
     statement = select(Product).order_by(Product.name)
     records = db.session.execute(statement)
     app_data = records.scalars()
@@ -46,6 +48,7 @@ def products():
 
 @app.route("/orders")
 def orders():
+    '''THis is the orders page. It will show all the orders listed in the database.'''
     statement = select(Order).order_by(Order.id)
     records = db.session.execute(statement)
     app_data = records.scalars()
@@ -53,9 +56,8 @@ def orders():
 
 # ======================== Specific Detail Pages ===============================    
 """
-This contains all specific details regarding the customer_id in customers or the order_id in orders.
 """
-
+# Will show a webpage with the details of the order with the specific order_id
 @app.route("/orders/<int:order_id>")
 def order_detail(order_id):
     order = Order.query.get_or_404(order_id)
@@ -75,21 +77,9 @@ def customer_detail(customer_id):
 
     for order in orders:
         order.total = sum([float(item.product.price) * float(item.quantity) for item in order.items])
-    return render_template("customer_detail.html", customer=customer, orders=orders)    # Accessing the Customer json file and c`reating them into a json record. 
+    return render_template("customer_detail.html", customer=customer, orders=orders)    # Accessing the Customer json file and creating them into a json record. 
 # =================================================================================================
-'''
-Each function is a route that returns a template to the url. The URL functions needs to be the same when
-connecting to different pages in the HTML. This is very important.
 
-The statements grabs the data from the database using an SQL command, and statement will hold that data.
-records is what EXECUTES that command. Statement can be inside the execute() function. 
-
-render_template is a functin that will load the HTML file and additional contents. The first position is REQUIRED to be
-the HTML file. The second position is data that can be accessible to the HTML file. This allows us to load any information that wants to be loaded. 
-
-Scalars is a function that will grab the data from the database and will be used to be displayed on the HTML file.
-
-''' 
 
 
 
@@ -99,20 +89,16 @@ Scalars is a function that will grab the data from the database and will be used
 def customers_json():
     
     statement = db.select(Customer).order_by(Customer.name)
-    # Statement holds all the information about customer and what it is grabbing.
     results = db.session.execute(statement)
     
     customers = [] # output variable
-    # appends the item into customers and which will be returned on the jsonify. 
     for customer in results.scalars():
-        # Accessing the Customer json file and creating them into a json record. 
         json_record = {
         "id": customer.id,
         "name": customer.name,
         "phone": customer.phone,
         "balance": customer.balance,
         }
-        # JSON record is just the individual record there is in the csv file and that will be processed. 
         customers.append(json_record)
     return jsonify(customers)
 
@@ -131,12 +117,9 @@ def products_json():
         "quantity": product.quantity
         }
         products.append(json_record)
-        # Turns products into a json format. 
     return jsonify(products)
-#creating  a route that takes in a URL parameter
 
 
-# This does not work at all -- lacking data. 
 @app.route("/api/orders")
 def order_json():
     statement = db.select(Order).order_by(Order.id)
@@ -157,12 +140,12 @@ def order_detail_json(order_id):
     result = db.session.execute(statement)
     data = []
     for data_p in result.scalars():
-        # Create a list of items
+ 
         items = [{"name": item.product.name, "quantity": item.quantity} for item in data_p.items]
         json_record = {
             "id": data_p.id,
             "customer_id": data_p.customer_id,
-            "items": items,  # Add the items to the JSON record
+            "items": items,  
         }
         data.append(json_record)
     return jsonify(data)
@@ -170,46 +153,10 @@ def order_detail_json(order_id):
 
 #creating  a route that takes in a URL parameter
 
-@app.route("/api/orders", methods=["POST"])
-def create_order():
-    # Extract JSON data from the request
-    data = request.get_json()
 
-    # Validate the JSON data
-    if "customer_id" not in data:
-        return jsonify({"error": "Missing customer_id"}), 400
-    if "items" not in data or not isinstance(data["items"], list) or not data["items"]:
-        return jsonify({"error": "Invalid items"}), 400
-
-    # Check if the customer exists
-    customer = Customer.query.get(data["customer_id"])
-    if not customer:
-        return jsonify({"error": "Customer not found"}), 404
-
-    # Create a new order
-    order = Order(customer_id=customer.id)
-    db.session.add(order)
-
-    # Add items to the order
-    for item_data in data["items"]:
-        if "name" not in item_data or "quantity" not in item_data:
-            return jsonify({"error": "Invalid item data"}), 400
-
-        # Check if the product exists
-        product = Product.query.filter_by(name=item_data["name"]).first()
-        if product:
-            # Create a new ProductOrder
-            product_order = ProductOrder(order_id=order.id, product_id=product.id, quantity=item_data["quantity"])
-            db.session.add(product_order)
-
-    # Save the changes to the database
-    db.session.commit()
-
-    # Return a success response
-    return jsonify(order.to_json()), 201
 # =================================================================================================
 '''
-This allows the creation for API's. 
+
 
 '''
 #==================== Grabbing ID to get specific data in API ===============================
@@ -247,6 +194,8 @@ def product_detail_json(product_id):
         products.append(json_record)
         
     return jsonify(products)
+
+
 
 
 
@@ -355,8 +304,35 @@ def product_put(product_id):
     
 
     return "", 204
+@app.route("/api/orders", methods=["POST"])
+def create_order():
+    # Extract JSON data from the request
+    data = request.get_json()
 
-from flask import redirect, url_for
+    if "customer_id" not in data:
+        return jsonify({"error": "Missing customer_id"}), 400
+    if "items" not in data or not isinstance(data["items"], list) or not data["items"]:
+        return jsonify({"error": "Invalid items"}), 400
+
+    customer = Customer.query.get(data["customer_id"])
+    if not customer:
+        return jsonify({"error": "Customer not found"}), 404
+
+    order = Order(customer_id=customer.id)
+    db.session.add(order)
+
+    for item_data in data["items"]:
+        if "name" not in item_data or "quantity" not in item_data:
+            return jsonify({"error": "Invalid item data"}), 400
+
+        product = Product.query.filter_by(name=item_data["name"]).first()
+        if product:
+            product_order = ProductOrder(order_id=order.id, product_id=product.id, quantity=item_data["quantity"])
+            db.session.add(product_order)
+
+    db.session.commit()
+
+    return jsonify(order.to_json()), 201
 
 @app.route("/orders/<int:order_id>/delete", methods=["POST"])
 def order_delete(order_id):
