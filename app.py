@@ -5,161 +5,84 @@ from db import db
 from sqlalchemy import select
 from flask import redirect, url_for
 from models import Customer, Product, Order, ProductOrder
+
 app = Flask(__name__)
-
-
-
-
-
+#This will create a database file named "database.db" in the current directory pookie
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
 app.instance_path = Path(".").resolve()
 db.init_app(app)
 
 
-
-
-
-
-
-#================================ pages ==========================
-"""This holds all pages with relevant information inside them"""
 @app.route("/") 
 def home():
     """This is the homepage. Nothing will be shown here"""
     return render_template("base.html")
 
+"""
+
+================================CUSTOMERS================================
+Contains
+    main page       =This holds the list of customers that are available. 
+                     Each customer name is linked to the orders they've made. 
+    customer_detail = an API that holds a json format of the customer details.
+                      This can be accessed through their customer ID's
+    api view        = An API view that holds ALL the customers and their information in the database.
+    METHODS
+        DELETE      = This will delete the customer from the database.
+        PUT         = This will update the customer's balance in the database.
+        POST        = This will add a new customer to the database.
+    
+"""
 @app.route("/customers")
 def customers():
-    """This is the customers page. It will show all the customers in the database."""
+    # staetement will hold the query that will be executed. Can be done in one line, but for safety, done with multiple
     statement = select(Customer).order_by(Customer.name)
+    # Executed the statement and stores the records in the variable records
     records = db.session.execute(statement)
+    #The records and converted into Scalars that can be accessed and iterated through. 
     app_data = records.scalars()
+    #For the testing
     print(statement)
     return render_template("customers.html", customers=app_data)
 
-@app.route("/products")
-def products():
-    '''This is the products page. It will show all the products in the database.'''
-    statement = select(Product).order_by(Product.name)
-    records = db.session.execute(statement)
-    app_data = records.scalars()
-    return render_template("products.html", products=app_data)
 
-
-@app.route("/orders")
-def orders():
-    '''THis is the orders page. It will show all the orders listed in the database.'''
-    statement = select(Order).order_by(Order.id)
-    records = db.session.execute(statement)
-    app_data = records.scalars()
-    return render_template("orders.html", orders=app_data)
-
-# ======================== Specific Detail Pages ===============================    
-"""
-"""
-# Will show a webpage with the details of the order with the specific order_id
-@app.route("/orders/<int:order_id>")
-def order_detail(order_id):
-    order = Order.query.get_or_404(order_id)
-
-    customer = Customer.query.get(order.customer_id)
-
-    order.total = sum(float(item.product.price) * float(item.quantity) for item in order.items)
-
-    return render_template("order_details.html", order=order, customer=customer)
-
-# Customer detail /customer/CUSTOMER_ID With links to all orders associated with the customer.
 @app.route("/customer/<int:customer_id>")
 def customer_detail(customer_id):
+    #get_or_404 will get the customer with the ID, if not found, will return a 404 error.
     customer = Customer.query.get_or_404(customer_id)
-
+    #Query all the orders that the customer has made. This will be added with the list that the customer has made
+    
     orders = Order.query.filter_by(customer_id=customer_id).all()
 
     for order in orders:
+        # THe total sum of the customer's order.
         order.total = sum([float(item.product.price) * float(item.quantity) for item in order.items])
-    return render_template("customer_detail.html", customer=customer, orders=orders)    # Accessing the Customer json file and creating them into a json record. 
-# =================================================================================================
+    return render_template("customer_detail.html", customer=customer, orders=orders)     
+
+# Need I say more? It's an API that holds all the customers in the database.
+from routes.api_customers import api_customers_bp
+app.register_blueprint(api_customers_bp, url_prefix="/api/customers")
 
 
-
-
-#================ API list of all the customers, products and orders ===============================
-# This part creates the API list of the Website. 
-@app.route("/api/customers")
-def customers_json():
+# @app.route("/api/customers")
+# def customers_json():
     
-    statement = db.select(Customer).order_by(Customer.name)
-    results = db.session.execute(statement)
+#     statement = db.select(Customer).order_by(Customer.name)
+#     results = db.session.execute(statement)
     
-    customers = [] # output variable
-    for customer in results.scalars():
-        json_record = {
-        "id": customer.id,
-        "name": customer.name,
-        "phone": customer.phone,
-        "balance": customer.balance,
-        }
-        customers.append(json_record)
-    return jsonify(customers)
+#     customers = [] #A list that will contain everything that needs to be known and will be pass through for iteration in the html file.
+#     for customer in results.scalars():
+#         json_record = {
+#         "id": customer.id,
+#         "name": customer.name,
+#         "phone": customer.phone,
+#         "balance": customer.balance,
+#         } #This one however does not have the order things. Too lazy to do that. 
+#         customers.append(json_record)
+#     return jsonify(customers)
 
 
-# Crating an API set 
-@app.route("/api/products")
-def products_json():
-    statement = db.select(Product).order_by(Product.name)
-    results = db.session.execute(statement)
-    products = [] # output variable
-    for product in results.scalars():
-        json_record = {
-        "id": product.id,
-        "name": product.name,
-        "price": product.price,
-        "quantity": product.quantity
-        }
-        products.append(json_record)
-    return jsonify(products)
-
-
-@app.route("/api/orders")
-def order_json():
-    statement = db.select(Order).order_by(Order.id)
-    results = db.session.execute(statement)
-    data = []
-    for data_p in results.scalars():
-        json_record = {
-            "id": data_p.id,
-            "customer_id": data_p.customer_id,
-            
-        }
-        data.append(json_record)
-    return jsonify(data)
-
-@app.route("/api/orders/<int:order_id>")
-def order_detail_json(order_id):
-    statement = db.select(Order).where(Order.id == order_id)
-    result = db.session.execute(statement)
-    data = []
-    for data_p in result.scalars():
- 
-        items = [{"name": item.product.name, "quantity": item.quantity} for item in data_p.items]
-        json_record = {
-            "id": data_p.id,
-            "customer_id": data_p.customer_id,
-            "items": items,  
-        }
-        data.append(json_record)
-    return jsonify(data)
-
-
-#creating  a route that takes in a URL parameter
-
-
-# =================================================================================================
-'''
-
-
-'''
-#==================== Grabbing ID to get specific data in API ===============================
+# An API view of a specific character passed through by their ID. 
 @app.route("/api/customers/<int:customers_id>")
 def customer_detail_json(customers_id):
     statement = db.select(Customer).where(Customer.id == customers_id)
@@ -176,57 +99,15 @@ def customer_detail_json(customers_id):
         products.append(json_record)
         
     return jsonify(products)
-
-
-@app.route("/api/products/<int:product_id>")
-def product_detail_json(product_id):
-    statement = db.select(Product).where(Product.id == product_id)
-    result = db.session.execute(statement)
-    products = []
-    for product in result.scalars():
-        json_record = {
-            "id": product.id,
-            "name": product.name,
-            "price": product.price,
-            "quantity": product.quantity
-        }
-        
-        products.append(json_record)
-        
-    return jsonify(products)
-
-
-
-
-
-
-#==========================================================================================================
-
-
-
-
-
-
-#==================== METHODS ===============================
-# All good
+# This'll delete the item. The method is delete, so it will delete
 @app.route("/api/customers/<int:customer_id>", methods=["DELETE"])
 def customer_delete(customer_id):
     customer = Customer.query.get(customer_id)
     db.session.delete(customer)
     db.session.commit()
-    return"deleted"
-
-
-# All good
-@app.route("/api/products/<int:product_id>", methods=["DELETE"])
-def product_delete(product_id):
-    prod = Customer.query.get(product_id)
-    db.session.delete(prod)
-    db.session.commit()
-    return"deleted"
-    
-
-# Giving the customer Balance 
+    return"deleted", 204
+# 
+#Will PUT new data into an existing Customer. If they no exist, returns an error.
 @app.route("/api/customers/<int:customer_id>", methods=["PUT"])
 def customer_update(customer_id):
     data = request.json
@@ -244,9 +125,7 @@ def customer_update(customer_id):
     db.session.commit()
     customers()
     return "", 204
-
-
-
+#Posting a NEW customer in the database. 
 @app.route("/api/customers", methods=["POST"])
 def customer_Post():
     data = request.json
@@ -264,22 +143,89 @@ def customer_Post():
 
     return "", 201
 
+"""
+================================PRODUCTS================================
+This displays the products that are available in the "store".
+The data is extracted from the Product database. 
+"""
+
+@app.route("/products")
+def products():
+    '''This is the products page. It will show all the products in the database.'''
+    statement = select(Product).order_by(Product.name)
+    records = db.session.execute(statement)
+    app_data = records.scalars()
+    return render_template("products.html", products=app_data)
 
 
-@app.route("/api/product", methods=["POST"])
+
+from routes.api_products import api_products_bp
+app.register_blueprint(api_products_bp, url_prefix="/api/products")
+
+# @app.route("/api/products")
+# def products_json():
+#     """Takes the data from products database and returns a JSON format of the data. THis is EVERYTHING"""
+#     statement = db.select(Product).order_by(Product.name)
+#     results = db.session.execute(statement)
+#     products = [] # output variable
+#     for product in results.scalars():
+#         json_record = {
+#         "id": product.id,
+#         "name": product.name,
+#         "price": product.price,
+#         "quantity": product.quantity
+#         }
+#         products.append(json_record)
+#     return jsonify(products)
+
+
+@app.route("/api/products/<int:product_id>")
+def product_detail_json(product_id):
+    """Returns an API view of the specified product formt he product_id. This is shown in a json format and not a webpage view."""
+    statement = db.select(Product).where(Product.id == product_id)
+    result = db.session.execute(statement)
+    products = [] # This will hold json that can be iterated once passed through when returned. 
+    for product in result.scalars():
+        json_record = {
+            "id": product.id,
+            "name": product.name,
+            "price": product.price,
+            "quantity": product.quantity
+        }
+        
+        products.append(json_record)
+        
+    return jsonify(products)
+
+@app.route("/api/products/<int:product_id>", methods=["DELETE"])
+def product_delete(product_id):
+    """Funciton is to delete a product through a delete method. It will remove the item with the specified product_id from the database."""
+    prod = Customer.query.get(product_id)
+    db.session.delete(prod)
+    db.session.commit()
+    return"deleted"
+
+
+
+
+@app.route("/api/products", methods=["POST"])
 def prodcut_post():
+    """
+    This will add a new product to the database once it has been sent
+    Name and Price are necessary information to update the product.
+    """
     data = request.json
 
-    if "name" and "prince" not in data:
+    if "name" and "price" not in data:
         return "Invalid Request", 400
     if not isinstance (data["name"], str):
         return "Invalid Request", 400
-    if not isinstance(data["price"], str):
+    if not isinstance(data["price"], float):
         return "Invalid Request", 400
     
     
     db.session.add(Product(name=data["name"], price=data["price"]))
-    
+    db.session.commit()
 
     return "", 204
 
@@ -301,14 +247,74 @@ def product_put(product_id):
     
     
     db.session.commit()
-    
-
     return "", 204
+
+"""
+
+==========================ORDERS==========================
+bane of my existence. Fuck this part. 
+
+
+"""
+
+@app.route("/orders")
+def orders():
+    '''THis is the orders page. It will show all the orders listed in the database.'''
+    statement = select(Order).order_by(Order.id)
+    records = db.session.execute(statement)
+    app_data = records.scalars()
+    return render_template("orders.html", orders=app_data)
+
+
+@app.route("/orders/<int:order_id>")
+def order_detail(order_id):
+    order = Order.query.get_or_404(order_id)
+
+    customer = Customer.query.get(order.customer_id)
+
+    order.total = sum(float(item.product.price) * float(item.quantity) for item in order.items)
+
+    return render_template("order_details.html", order=order, customer=customer)
+
+
+
+
+from routes.api_orders import api_orders_bp
+app.register_blueprint(api_orders_bp, url_prefix="/api/orders")
+
+# @app.route("/api/orders")
+# def order_json():
+#     statement = db.select(Order).order_by(Order.id)
+#     results = db.session.execute(statement)
+#     data = []
+#     for data_p in results.scalars():
+#         json_record = {
+#             "id": data_p.id,
+#             "customer_id": data_p.customer_id,
+            
+#         }
+#         data.append(json_record)
+#     return jsonify(data)
+
+@app.route("/api/orders/<int:order_id>")
+def order_detail_json(order_id):
+    statement = db.select(Order).where(Order.id == order_id)
+    result = db.session.execute(statement)
+    data = []
+    for data_p in result.scalars():
+        items = [{"name": item.product_ref.name, "quantity": item.quantity} for item in data_p.product_orders]
+        json_record = {
+            "id": data_p.id,
+            "customer_id": data_p.customer_id,
+            "items": items,  
+        }
+        data.append(json_record)
+    return jsonify(data)
+
 @app.route("/api/orders", methods=["POST"])
 def create_order():
-    # Extract JSON data from the request
     data = request.get_json()
-
+    # hate this
     if "customer_id" not in data:
         return jsonify({"error": "Missing customer_id"}), 400
     if "items" not in data or not isinstance(data["items"], list) or not data["items"]:
@@ -343,17 +349,22 @@ def order_delete(order_id):
     return redirect(url_for("orders"))
 
 
-
-# =================================================================================================
-"""
-PUT is basically UPDATING the data. The data being updated NEEDS to exist, or else it will return an error that the data cannot be found
-POST is basically ADDING the data. The data being added NEEDS to be in the database, or else it will return an error that the data cannot be found
-DELETE is basically DELETING the data. The data being deleted NEEDS to be in the database, or else it will return an error that the data cannot be found
-
-
-
-
-"""
+@app.route("/api/orders/<int:order_id>", methods=["POST"])
+def order_update(order_id):
+    order = db.get_or_404(Order, order_id)
+    if order.strategy == "adjust":
+        order.process_method("adjust")
+    elif order.strategy == "reject":
+        order.process_method("reject")
+        
+    elif order.strategy == "ignore":
+        order.process_method("ignore")
+    # else:
+        return f"This is not a valid strategy - {order.strategy}", 400
+        pass
+    db.session.commit()
+    
+    return redirect(url_for("orders"))
 
 if __name__=="__main__":
     app.run(debug=True, port=8888)

@@ -40,3 +40,19 @@ nav{
     margin: 50px 50px 50px 50px;
     float: left;
 }
+
+
+
+#ord_container{
+    margin: 50px 50px 50px 50px;
+    border: 2px black solid;
+    padding: 50px;
+}
+#ord_info{
+    margin: 50px 50px 50px 50px;
+        
+}
+#buttons{
+    display: flex;
+    justify-content: space-around;
+ }

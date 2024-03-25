@@ -22,7 +22,7 @@ class Customer(db.Model):
 class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False, unique=True)
-    price = db.Column(db.String(20), nullable=False)
+    price = db.Column(db.Float, nullable=False)
     quantity = db.Column(db.Integer, nullable=False, default=0)
     product_orders = db.relationship('ProductOrder', backref='product_ref')
 
@@ -39,9 +39,38 @@ class Order(db.Model):
     total = db.Column(db.Integer, nullable=False)
     customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'))
     product_orders = db.relationship('ProductOrder', backref='order_ref', cascade='all, delete-orphan')
-    # created = db.column(db.DateTime, server_default=db.func.now()) - part 3
-    # processed = db.column(db.Boolean, default=None, nullable= True) - part 3, no need yet
-    
+    created = db.Column(db.DateTime, default=db.func.now())
+    processed = db.Column(db.Boolean, default=None, nullable= True)
+    strategy = db.Column(db.String(20), default="adjust")
+    # Worse part of this project so far ommai
+    def process_method(self, strategy="adjust"):
+        if strategy == "adjust":
+            for product_order in self.product_orders:
+                product = Product.query.get(product_order.product_id)
+                if product.quantity < product_order.quantity:
+                    product_order.quantity = product.quantity
+                    product.quantity = 0
+                else:
+                    product.quantity -= product_order.quantity
+            self.processed = True
+        elif strategy == "reject":
+            for product_order in self.product_orders:
+                product = Product.query.get(product_order.product_id)
+                if product.quantity < product_order.quantity:
+                    # Reject the order
+                    self.processed = False
+                    return
+            # If we haven't returned yet, all products are available in sufficient quantity
+            for product_order in self.product_orders:
+                product = Product.query.get(product_order.product_id)
+                product.quantity -= product_order.quantity
+            self.processed = True
+        elif strategy == "ignore":
+            # Ignore the order
+            self.processed = False
+        else:
+            # Default strategy
+            pass
     
     
 class ProductOrder(db.Model):

@@ -27,7 +27,7 @@ def import_data():
             reader = csv.reader(f)
             next(reader)  
             for row in reader:
-                products = Product(name=row[0], price=row[1], quantity=random.randint(0,100))
+                products = Product(name=row[0], price=row[1], quantity=random.randint(1,2))
                 db.session.add(products)
 
         db.session.commit()
@@ -62,6 +62,39 @@ def random_data():
 
             order.total = total
             db.session.commit()  
+
+
+
+
+
+# def process_method():
+#     with app.app_context():
+#         # Needed - Product Quantity to be compared to Product Quantity
+        
+#         # productOrder = db.select(ProductOrder).where(ProductOrder.quantity > Product.quantity)
+#         # product_quantity = db.select(Product.quantity)
+#         # product_order_quantity = db.select(ProductOrder.quantity)
+#         order = db.select(Order).where(Order.processed == None)
+#         if order:
+#             for product_order in order.product_orders:
+#                 product = Product.query.get(product_order.product_id)
+#                 if product.quantity < product_order.quantity:
+#                     product_order.quantity = product.quantity
+#                     product.quantity = 0
+#                 else:
+#                     product.quantity -= product_order.quantity
+#             order.processed = True
+#             db.session.commit()
+    
+#     """
+#     This function processes the order
+#     Not processing order that's already process
+#     Current customer balance must be >0
+#     if customer ordered more of a product than is available in store, 
+#         adjust(default) - the order is adjusted to match the quantity available in the store. 
+        
+#     """
+    
         
 
 if __name__ == "__main__":
