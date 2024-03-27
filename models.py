@@ -57,19 +57,15 @@ class Order(db.Model):
             for product_order in self.product_orders:
                 product = Product.query.get(product_order.product_id)
                 if product.quantity < product_order.quantity:
-                    # Reject the order
                     self.processed = False
                     return
-            # If we haven't returned yet, all products are available in sufficient quantity
             for product_order in self.product_orders:
                 product = Product.query.get(product_order.product_id)
                 product.quantity -= product_order.quantity
             self.processed = True
         elif strategy == "ignore":
-            # Ignore the order
             self.processed = False
         else:
-            # Default strategy
             pass
     
     
