@@ -208,7 +208,7 @@ def product_delete(product_id):
 
 
 
-@app.route("/api/products", methods=["POST"])
+@app.route("/api/products/", methods=["POST"])
 def prodcut_post():
     """
     This will add a new product to the database once it has been sent
