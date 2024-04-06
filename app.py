@@ -147,6 +147,8 @@ def customer_Post():
 ================================PRODUCTS================================
 This displays the products that are available in the "store".
 The data is extracted from the Product database. 
+This part needs more testing and understanding.
+
 """
 
 @app.route("/products")
