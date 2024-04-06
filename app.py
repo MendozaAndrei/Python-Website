@@ -350,7 +350,7 @@ def order_delete(order_id):
     db.session.commit()
     return redirect(url_for("orders"))
 
-
+# Not even sure if this works properly. 
 @app.route("/api/orders/<int:order_id>", methods=["POST"])
 def order_update(order_id):
     order = db.get_or_404(Order, order_id)
