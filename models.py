@@ -1,15 +1,15 @@
-from sqlalchemy import Boolean, Float, Numeric, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Float, Numeric, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import mapped_column, relationship
 from db import db
+from sqlalchemy.sql import func
 
 #This'll create the table.
 class Customer(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(200), nullable=False, unique=True)
-    phone = db.Column(db.String(20), nullable=False, unique=True)
-    balance = db.Column(db.Integer, nullable=False, default=0)
-    orders = db.relationship('Order', backref='customer')
-
+    id = mapped_column(Integer, primary_key=True) 
+    name = mapped_column(String(200), nullable=False, unique=True) 
+    phone = mapped_column(String(20), nullable=False) 
+    balance = mapped_column(Numeric, nullable=False, default=100)
+    orders = relationship("Order")
     def to_json(self):
         return {
             "id": self.id,
@@ -31,12 +31,16 @@ class Product(db.Model):
     
     
     '''
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(200), nullable=False, unique=True)
-    price = db.Column(db.Float, nullable=False)
-    quantity = db.Column(db.Integer, nullable=False, default=0)
-    product_orders = db.relationship('ProductOrder', backref='product_ref')
+    # id = db.Column(db.Integer, primary_key=True)
+    # name = db.Column(db.String(200), nullable=False, unique=True)
+    # price = db.Column(db.Float, nullable=False)
+    # quantity = db.Column(db.Integer, nullable=False, default=0)
+    # product_orders = db.relationship('ProductOrder', backref='product_ref')
     
+    id = mapped_column(Integer, primary_key=True) 
+    name = mapped_column(String(200), nullable=False, unique=True) 
+    price = mapped_column(Numeric, nullable=False) 
+    quantity = mapped_column(Integer, nullable=False, default=10)
 
     def to_json(self):
         return {
@@ -47,13 +51,14 @@ class Product(db.Model):
         }
 
 class Order(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    total = db.Column(db.Integer, nullable=False)
-    customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'))
-    product_orders = db.relationship('ProductOrder', backref='order_ref', cascade='all, delete-orphan')
-    created = db.Column(db.DateTime, default=db.func.now())
-    processed = db.Column(db.Boolean, default=None, nullable= True)
-    strategy = db.Column(db.String(20), default="adjust")
+    id = mapped_column(Integer, primary_key=True) 
+    customer_id = mapped_column(Integer, ForeignKey(Customer.id), nullable=False) 
+    created = mapped_column(DateTime, default=func.now())
+    processed = mapped_column(DateTime, nullable=True, default=None)
+    customer = relationship("Customer", back_populates="orders")
+    items = relationship("ProductOrder", back_populates="order")
+    total = db.Column(db.Float, nullable=False, default=0.0)
+    strategy = mapped_column(String(20), nullable=False, default="adjust")
     # Worse part of this project so far ommai
     def process_method(self, strategy="adjust"):
         if strategy == "adjust":
@@ -94,12 +99,21 @@ class Order(db.Model):
             self.processed = False
         else:
             pass
+        
+    def getTotal(self):
+        res = 0
+        for item in self.items:
+            res += item.quantity*item.product.price
+        return res
     
     
 class ProductOrder(db.Model):
-    order_id = db.Column(db.Integer, db.ForeignKey('order.id'), primary_key=True)
-    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), primary_key=True)
-    quantity = db.Column(db.Integer, nullable=False, default=0)
+    id = mapped_column(Integer, primary_key=True) 
+    order_id = mapped_column(Integer, ForeignKey(Order.id), nullable=False) 
+    product_id = mapped_column(Integer, ForeignKey(Product.id), nullable=False)
+    product = relationship("Product")
+    order = relationship("Order")
+    quantity = mapped_column(Integer, nullable=False, default=0)
     def to_json(self):
         return {
             'order_id': self.order_id,

@@ -40,7 +40,7 @@ def delete(path):
 
 def demo():
     print("Adding a new product: 'salty nuts' (6.99)")
-    post("/api/products/", {"name": "salty nuts", "price": 6.99})
+    post("/api/products/", {"name": "Fried Chicken Fries", "price": 6.99})
     input("Check for salty nuts in the web page. Press Enter when ready.")
     webbrowser.open(FLASK_URL + "/products")
     input("Press Enter to continue.")
