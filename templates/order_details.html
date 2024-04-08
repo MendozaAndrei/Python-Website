@@ -10,26 +10,30 @@
 
 <h2>Products</h2>
 {% for item in order.items %}
-
 <div class="spreadsheet">
     <div>
         <p>Product: {{ item.product.name }}</p>
     </div>
     <div>
         <p>Price: {{ item.product.price }}</p>
-        
     </div>
     <div>
         <p>Quantity Ordered: {{ item.quantity }}</p>
-        
     </div>
     <div>
-        <p>Quantity Available: {{ item.product.quantity_available }}</p>
-        
+        <p>Quantity Available: {{ item.product.quantity }}</p>
     </div>
-
 </div>
 {% endfor %}
 
-<a href="/customer/{{ customer.id }}">Back to Customer Page</a>
+<div style="display: flex; justify-content: space-around;">
+    <form action="{{ url_for('order_update', order_id=order.id) }}" method="post">
+        <input  type="submit" value="Process Order" {% if order.processed %}disabled{% endif %}>
+    </form>
+    <form action="{{ url_for('order_delete', order_id=order.id) }}" method="post">
+        <input type="submit" value="Delete Order" {% if order.processed %}disabled{% endif %}>
+    </form>
+</div>
+
+<a href="/orders">Back to Orders Page</a>
 {% endblock %}

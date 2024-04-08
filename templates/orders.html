@@ -22,19 +22,9 @@
         <p>Processed: {{ class_name }}</p>
     </div>
 
-    {% if class_name == "pending"%}
-        <div id="buttons">
-            <form method="POST" action="{{ url_for('order_delete', order_id=order.id) }}">
-                <button type="submit">Delete</button>
-            </form>
-            
-            <form method="POST" action="{{ url_for('order_update', order_id=order.id) }}">
-                <button type="submit">process</button>
-            </form>
-        </div>
-
-
-    {% endif%}
+    <div id="ord_buttons">
+        <a href="/orders/{{ order.id }}">Edit Order</a>
+    </div>
 
 </div>
 

@@ -31,7 +31,14 @@ def create_customer():
     phone = data["phone"]
     if (not isinstance(name, str)) or (not isinstance(phone, str)):
         return "Invalid request: Datatype", 400
-    new_customer = Customer(name=name, phone=phone)
+    
+    if "balance" in data:
+        if not isinstance(data["balance"], (int, float)):
+            return "Invalid request: balance", 400
+        balance = data["balance"]
+    else: 
+        balance = 0.0
+    new_customer = Customer(name=name, phone=phone, balance=balance)
     db.session.add(new_customer)
     db.session.commit()
     return "A new customer was added!", 204

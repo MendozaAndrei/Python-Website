@@ -9,7 +9,7 @@ class Customer(db.Model):
     id = mapped_column(Integer, primary_key=True) 
     name = mapped_column(String(200), nullable=False, unique=True) 
     phone = mapped_column(String(20), nullable=False) 
-    balance = mapped_column(Numeric, nullable=False, default=100)
+    balance = mapped_column(Numeric(10,2), nullable=False, default=100)
     orders = relationship("Order")
     def to_json(self):
         return {
@@ -40,7 +40,7 @@ class Product(db.Model):
     
     id = mapped_column(Integer, primary_key=True) 
     name = mapped_column(String(200), nullable=False, unique=True) 
-    price = mapped_column(Numeric, nullable=False) 
+    price = mapped_column(Numeric(10,2), nullable=False) 
     quantity = mapped_column(Integer, nullable=False, default=10)
 
     def to_json(self):
@@ -60,52 +60,51 @@ class Order(db.Model):
     items = relationship("ProductOrder", back_populates="order")
     strategy = mapped_column(String(20), nullable=False, default="adjust")
     # Worse part of this project so far ommai
-    def process_method(self, strategy="adjust"):
+    def process_method(self, strategy):
         self.processed = datetime.now()
+        self.strategy = strategy  # Set the strategy attribute
+
         if strategy == "adjust":
             for product_order in self.items:
+                # Check if quantity is negative
+                if product_order.quantity < 0:
+                    return (False, "Order cannot be processed due to negative quantity")
+
                 product = Product.query.get(product_order.product_id)
-                # if the quantity of the product is less than the quantity of the product order
                 if product.quantity < product_order.quantity:
                     product_order.quantity = product.quantity
-                    # The customer will get the only available quantity, and the quantity of the product is set to 0
                     product.quantity = 0
-                    
                 else:
-                # If the quantity of the product is more than the quantity of the product order
-                # It will decrease the number of the quantity. 
                     product.quantity -= product_order.quantity
-            
-            
-            
-        
+            db.session.commit()
+            return (True, "Order processed successfully")
         elif strategy == "reject":
-            """
-            This part is a little iffy.
-            It is to reject the entire order if the quanitty of any product is LESS than the quanity of the product order.
-            If the quanitty of the product is LESS than the quanity of the product order, the order will be rejected, and won't be processed at all.
-            """
             for product_order in self.items:
                 product = Product.query.get(product_order.product_id)
                 if product.quantity < product_order.quantity:
-                    self.processed = False
-                    return
-            for product_order in self.product_orders:
-                product = Product.query.get(product_order.product_id)
-                product.quantity -= product_order.quantity
-            
+                    self.processed = None
+                    db.session.commit()
+                    return (False, "")
+            db.session.commit()
+            return (True, "")
         elif strategy == "ignore":
-            # ignores
-            self.processed = datetime.now()
-        else:
-            raise ValueError("Invalid strategy")
-            pass
-        
+            db.session.commit()
+            return (True, "")
+            
     def getTotal(self):
-        res = 0
-        for item in self.items:
-            res += item.quantity*item.product.price
-        return res
+        return sum(item.product.price * item.quantity for item in self.order_items)
+    
+    
+    def to_json(self):
+        return {
+            'id': self.id,
+            'customer_id': self.customer_id,
+            'created': self.created,
+            'processed': self.processed,
+            'strategy': self.strategy,
+            'total': self.getTotal()
+            # 'items': [item.to_json() for item in self.items]
+        }
     
     
 class ProductOrder(db.Model):

@@ -67,6 +67,136 @@ def customer_detail(customer_id):
     return render_template("customer_detail.html", customer=customer, orders=orders)
 
 
+
+"""
+================================PRODUCTS================================
+This displays the products that are available in the "store".
+The data is extracted from the Product database. 
+This part needs more testing and understanding.
+
+"""
+
+from routes.api_products import *
+app.register_blueprint(api_products_bp, url_prefix="/api/products")
+app.register_blueprint(api_products_id_bp, url_prefix="/api/products/<int:product_id>")
+
+@app.route("/products")
+def products():
+    '''This is the products page. It will show all the products in the database.'''
+    statement = select(Product).order_by(Product.name)
+    records = db.session.execute(statement)
+    app_data = records.scalars()
+    return render_template("products.html", products=app_data)
+
+
+
+
+
+"""
+
+==========================ORDERS==========================
+bane of my existence. Fuck this part. 
+
+
+"""
+
+@app.route("/orders")
+def orders():
+    '''This is the orders page. It will show all the orders listed in the database.'''
+    statement = select(Order).order_by(Order.id)
+    records = db.session.execute(statement)
+    
+    orders = records.scalars().all()
+    for order in orders:
+        order.total = sum(float(item.product.price) * float(item.quantity) for item in order.items)
+    
+    return render_template("orders.html", orders=orders)
+
+@app.route("/orders/<int:order_id>")
+def order_detail(order_id):
+    order = Order.query.get_or_404(order_id)
+
+    customer = Customer.query.get(order.customer_id)
+
+    # order.total = sum(float(item.product.price) * float(item.quantity) for item in order.items)
+    # for order in orders:
+    #     order.total = sum([float(item.product.price) * float(item.quantity) for item in order.items])
+    order.total = sum(item.product.price * item.quantity for item in order.items)
+    customer.balance -= order.total
+    db.session.commit()
+    return render_template("order_details.html", order=order, customer=customer)
+
+
+
+
+from routes.api_orders import *
+app.register_blueprint(api_orders_bp, url_prefix="/api/orders/")
+app.register_blueprint(api_order_id_bp, url_prefix="/api/orders/<int:order_id>")
+
+# @app.route("/api/orders")
+# def order_json():
+#     statement = db.select(Order).order_by(Order.id)
+#     results = db.session.execute(statement)
+#     data = []
+#     for data_p in results.scalars():
+#         json_record = {
+#             "id": data_p.id,
+#             "customer_id": data_p.customer_id,
+            
+#         }
+#         data.append(json_record)
+#     return jsonify(data)
+
+@app.route("/orders/<int:order_id>/delete", methods = ["POST"])
+def order_delete(order_id):
+    order = db.get_or_404(Order, order_id)
+    customer = Customer.query.get(order.customer_id)
+
+    stm = db.select(ProductOrder).where(ProductOrder.order_id == order.id)
+    res = db.session.execute(stm).scalars().all()
+    for each in res:
+        db.session.delete(each)
+    
+    db.session.delete(order)
+    db.session.commit()
+
+    db.session.refresh(customer)  # Refresh the customer object from the database
+    if order in customer.orders:
+        customer.orders.remove(order)  # Remove the order from the customer's list of orders
+        db.session.commit()
+
+    return redirect(url_for("orders"))
+
+@app.route("/orders/<int:order_id>/update", methods=["POST"])
+def order_update(order_id):
+    # data = request.get_json()
+
+    # if data is None or data.get('process') != True:
+    #     return jsonify({"error": "Invalid request"}), 400
+
+    # order = Order.query.get(order_id)
+
+    # if order is None:
+    #     return jsonify({"error": "Order not found"}), 404
+
+    # [success, message] = order.process_method()
+
+    # if success:
+    #     return redirect(url_for("orders"))
+    # else: 
+    #     return jsonify({"error": message})
+    order = db.get_or_404(Order, order_id)
+    [result, error_message] = order.process_method(strategy="adjust")
+    if result == False:
+        return error_message, 400
+    elif result == True:
+        db.session.commit()
+        return redirect(url_for("orders"))
+if __name__=="__main__":
+    app.run(debug=True, port=8388)
+
+
+    
 # @app.route("/api/customers")
 # def customers_json():
     
@@ -145,28 +275,6 @@ def customer_detail(customer_id):
     
 
 #     return "", 201
-
-"""
-================================PRODUCTS================================
-This displays the products that are available in the "store".
-The data is extracted from the Product database. 
-This part needs more testing and understanding.
-
-"""
-
-from routes.api_products import *
-app.register_blueprint(api_products_bp, url_prefix="/api/products")
-app.register_blueprint(api_products_id_bp, url_prefix="/api/products/<int:product_id>")
-
-@app.route("/products")
-def products():
-    '''This is the products page. It will show all the products in the database.'''
-    statement = select(Product).order_by(Product.name)
-    records = db.session.execute(statement)
-    app_data = records.scalars()
-    return render_template("products.html", products=app_data)
-
-
 
 # @app.route("/api/products")
 # def products_json():
@@ -257,73 +365,8 @@ def products():
 #     db.session.commit()
 #     return "", 204
 
-"""
-
-==========================ORDERS==========================
-bane of my existence. Fuck this part. 
 
 
-"""
-
-@app.route("/orders")
-def orders():
-    '''THis is the orders page. It will show all the orders listed in the database.'''
-    statement = select(Order).order_by(Order.id)
-    records = db.session.execute(statement)
-    app_data = records.scalars()
-    return render_template("orders.html", orders=app_data)
-
-
-@app.route("/orders/<int:order_id>")
-def order_detail(order_id):
-    order = Order.query.get_or_404(order_id)
-
-    customer = Customer.query.get(order.customer_id)
-
-    order.total = sum(float(item.product.price) * float(item.quantity) for item in order.items)
-
-    return render_template("order_details.html", order=order, customer=customer)
-
-
-
-
-from routes.api_orders import *
-app.register_blueprint(api_orders_bp, url_prefix="/api/orders")
-app.register_blueprint(api_order_id_bp, url_prefix="/api/orders/<int:order_id>")
-
-# @app.route("/api/orders")
-# def order_json():
-#     statement = db.select(Order).order_by(Order.id)
-#     results = db.session.execute(statement)
-#     data = []
-#     for data_p in results.scalars():
-#         json_record = {
-#             "id": data_p.id,
-#             "customer_id": data_p.customer_id,
-            
-#         }
-#         data.append(json_record)
-#     return jsonify(data)
-
-@app.route("/orders/<int:order_id>/delete", methods = ["POST"])
-def order_delete(order_id):
-    order = db.get_or_404(Order, order_id)
-    customer = Customer.query.get(order.customer_id)
-
-    stm = db.select(ProductOrder).where(ProductOrder.order_id == order.id)
-    res = db.session.execute(stm).scalars().all()
-    for each in res:
-        db.session.delete(each)
-    
-    db.session.delete(order)
-    db.session.commit()
-
-    db.session.refresh(customer)  # Refresh the customer object from the database
-    if order in customer.orders:
-        customer.orders.remove(order)  # Remove the order from the customer's list of orders
-        db.session.commit()
-
-    return redirect(url_for("orders"))
 # @app.route("/orders", methods=["POST"])
 # def create_order():
 #     data = request.get_json()
@@ -357,25 +400,42 @@ def order_delete(order_id):
 #     return redirect(url_for("orders"))
 
 # # Not even sure if this works properly. 
-@app.route("/api/orders/<int:order_id>", methods=["POST"])
-def order_update(order_id):
-    order = db.get_or_404(Order, order_id)
-    if order.strategy == "adjust":
-        order.process_method("adjust")
-    elif order.strategy == "reject":
-        order.process_method("reject")
+# @app.route("/api/orders/<int:order_id>", methods=["POST"])
+# def order_update(order_id):
+#     order = db.get_or_404(Order, order_id)
+#     if order.strategy == "adjust":
+#         order.process_method("adjust")
+#     elif order.strategy == "reject":
+#         order.process_method("reject")
         
-    elif order.strategy == "ignore":
-        order.process_method("ignore")
-    # else:
-        return f"This is not a valid strategy - {order.strategy}", 400
-        pass
-    db.session.commit()
+#     elif order.strategy == "ignore":
+#         order.process_method("ignore")
+#     # else:
+#         return f"This is not a valid strategy - {order.strategy}", 400
+#         pass
+#     db.session.commit()
     
-    return redirect(url_for("orders"))
+#     return redirect(url_for("orders"))
 
-if __name__=="__main__":
-    app.run(debug=True, port=8388)
+# @app.route("/api/orders/<int:order_id>", methods=["POST"])
 
+# def order_update(order_id):
+#     order = db.get_or_404(Order, order_id)
 
+#     if request.is_json:
+#         strategy = request.get_json().get('strategy', 'adjust')  # Get strategy from request data
+#     else:
+#         strategy = 'adjust'
+
+#     if strategy == "adjust":
+#         order.process_method("adjust")
+#     elif strategy == "reject":
+#         order.process_method("reject")
+#     elif strategy == "ignore":
+#         order.process_method("ignore")
+#     else:
+#         return jsonify({"error": "Invalid strategy"}), 400
+
+#     db.session.commit()
     
+#     return redirect(url_for("orders"))

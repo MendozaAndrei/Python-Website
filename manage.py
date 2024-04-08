@@ -20,20 +20,19 @@ def import_data():
             reader = csv.reader(f)
             next(reader) 
             for row in reader:
-                customers = Customer(name=row[0], phone=row[1], balance=random.randint(100,1000))
+                customers = Customer(name=row[0], phone=row[1], balance=random.choice([100, 200, 300, -1000]))
                 db.session.add(customers)
 
         with open('data/products.csv', 'r') as f:
             reader = csv.reader(f)
             next(reader)  
             for row in reader:
-                products = Product(name=row[0], price=row[1], quantity=random.randint(1,2))
+                products = Product(name=row[0], price=row[1], quantity=10)
                 db.session.add(products)
 
         db.session.commit()
         
 
-# Grabbing random values
 def random_data():
     with app.app_context():
         for x in range(4):
@@ -100,6 +99,35 @@ if __name__ == "__main__":
     drop_all()
     create_all()
     import_data()
+    with app.app_context(): 
+        
+        order3 = Order(customer_id = 1)
+        order4 = Order(customer_id = 5)
+        order5 = Order(customer = db.session.execute(db.select(Customer).order_by(func.random()).limit(1)).scalar())
+        po3 = ProductOrder(order_id = 2, product_id = 2, quantity = 10)
+        po4 = ProductOrder(order_id = 2, product_id = 12, quantity = 10)
+        po5 = ProductOrder(order_id = 2, product_id = 14, quantity = 10)
+        po6 = ProductOrder(order_id = 2, product_id = 7, quantity = 10)
+        po7 = ProductOrder(order_id = 3, product_id = 5, quantity = 7)
+        po8 = ProductOrder(order_id = 3, product_id = 3, quantity = 9)
+        po9 = ProductOrder(order_id = 4, product_id = 2, quantity = 1)
+        po10 = ProductOrder(order_id = 5, product_id = 6, quantity = 4)
+        po11 = ProductOrder(order_id = 5, product_id = 11, quantity = 2)
+        po12 = ProductOrder(order_id = 5, product_id = 7, quantity = 2)
+        db.session.add(order3)
+        db.session.add(order4)
+        db.session.add(order5)
+        db.session.add(po3)
+        db.session.add(po4)
+        db.session.add(po5)
+        db.session.add(po6)
+        db.session.add(po7)
+        db.session.add(po8)
+        db.session.add(po9)
+        db.session.add(po10)
+        db.session.add(po11)
+        db.session.add(po12)
+        db.session.commit()
     random_data()
     
     
