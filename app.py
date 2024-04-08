@@ -308,6 +308,7 @@ app.register_blueprint(api_order_id_bp, url_prefix="/api/orders/<int:order_id>")
 @app.route("/orders/<int:order_id>/delete", methods = ["POST"])
 def order_delete(order_id):
     order = db.get_or_404(Order, order_id)
+    customer = Customer.query.get(order.customer_id)
 
     stm = db.select(ProductOrder).where(ProductOrder.order_id == order.id)
     res = db.session.execute(stm).scalars().all()
@@ -316,8 +317,13 @@ def order_delete(order_id):
     
     db.session.delete(order)
     db.session.commit()
-    return redirect(url_for("orders"))
 
+    db.session.refresh(customer)  # Refresh the customer object from the database
+    if order in customer.orders:
+        customer.orders.remove(order)  # Remove the order from the customer's list of orders
+        db.session.commit()
+
+    return redirect(url_for("orders"))
 # @app.route("/orders", methods=["POST"])
 # def create_order():
 #     data = request.get_json()
@@ -369,7 +375,7 @@ def order_update(order_id):
     return redirect(url_for("orders"))
 
 if __name__=="__main__":
-    app.run(debug=True, port=8888)
+    app.run(debug=True, port=8388)
 
 
     

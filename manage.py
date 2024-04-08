@@ -36,11 +36,11 @@ def import_data():
 # Grabbing random values
 def random_data():
     with app.app_context():
-        for x in range(100):
+        for x in range(4):
             cust_stmt = db.select(Customer).order_by(func.random()).limit(1)
             customer = db.session.execute(cust_stmt).scalar()
 
-            order = Order(customer=customer, total=0)
+            order = Order(customer=customer)
             db.session.add(order)
             db.session.commit()
 
@@ -60,9 +60,8 @@ def random_data():
                     product_order = ProductOrder(order_id=order.id, product_id=product.id, quantity=quantity)
                     db.session.add(product_order)
 
-            order.total = total
+            # order.total = total  # Remove this line
             db.session.commit()  
-
 
 
 

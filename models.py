@@ -2,6 +2,7 @@ from sqlalchemy import Boolean, Float, Numeric, DateTime, ForeignKey, Integer, S
 from sqlalchemy.orm import mapped_column, relationship
 from db import db
 from sqlalchemy.sql import func
+from datetime import datetime
 
 #This'll create the table.
 class Customer(db.Model):
@@ -57,12 +58,12 @@ class Order(db.Model):
     processed = mapped_column(DateTime, nullable=True, default=None)
     customer = relationship("Customer", back_populates="orders")
     items = relationship("ProductOrder", back_populates="order")
-    total = db.Column(db.Float, nullable=False, default=0.0)
     strategy = mapped_column(String(20), nullable=False, default="adjust")
     # Worse part of this project so far ommai
     def process_method(self, strategy="adjust"):
+        self.processed = datetime.now()
         if strategy == "adjust":
-            for product_order in self.product_orders:
+            for product_order in self.items:
                 product = Product.query.get(product_order.product_id)
                 # if the quantity of the product is less than the quantity of the product order
                 if product.quantity < product_order.quantity:
@@ -74,7 +75,7 @@ class Order(db.Model):
                 # If the quantity of the product is more than the quantity of the product order
                 # It will decrease the number of the quantity. 
                     product.quantity -= product_order.quantity
-            self.processed = True
+            
             
             
         
@@ -84,7 +85,7 @@ class Order(db.Model):
             It is to reject the entire order if the quanitty of any product is LESS than the quanity of the product order.
             If the quanitty of the product is LESS than the quanity of the product order, the order will be rejected, and won't be processed at all.
             """
-            for product_order in self.product_orders:
+            for product_order in self.items:
                 product = Product.query.get(product_order.product_id)
                 if product.quantity < product_order.quantity:
                     self.processed = False
@@ -92,12 +93,12 @@ class Order(db.Model):
             for product_order in self.product_orders:
                 product = Product.query.get(product_order.product_id)
                 product.quantity -= product_order.quantity
-            self.processed = True
             
         elif strategy == "ignore":
             # ignores
-            self.processed = False
+            self.processed = datetime.now()
         else:
+            raise ValueError("Invalid strategy")
             pass
         
     def getTotal(self):
@@ -113,6 +114,7 @@ class ProductOrder(db.Model):
     product_id = mapped_column(Integer, ForeignKey(Product.id), nullable=False)
     product = relationship("Product")
     order = relationship("Order")
+    quantity = mapped_column(Integer, nullable=False, default=0)
     quantity = mapped_column(Integer, nullable=False, default=0)
     def to_json(self):
         return {
